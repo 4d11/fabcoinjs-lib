@@ -2,6 +2,7 @@ var bitcoinjs = require('bitcoinjs-lib')
 var BigNumber = require('bignumber.js')
 var OPS = require('qtum-opcodes')
 var Buffer = require('safe-buffer').Buffer
+var reverseInplace = require("buffer-reverse/inplace")
 
 /**
  * This is a function for selecting QTUM utxos to build transactions
@@ -194,6 +195,32 @@ function buildSendToContractTransaction(masterNode, scChangeKeyPair, contractAdd
     return tx.build().toHex()
 }
 
+function getContractAddress(txId, vouts) {
+    let txIdBuffer = Buffer.from(txId, 'hex');
+    reverseInplace(txIdBuffer);
+
+    let voutBuffer = Buffer.alloc(4); // 32 bits / 4 bytes for vout
+    let voutNum = 0;
+    // append vout index of contract to txId
+    for (let vout of vouts) {
+        if (hasOpCreate(vout)) {
+            voutBuffer.writeInt32LE(voutNum);
+            break;
+        }
+        voutNum ++;
+    }
+    let txIdAndVout = Buffer.concat([txIdBuffer, voutBuffer]);
+
+    let sha256vout =  bitcoinjs.crypto.sha256(txIdAndVout);
+    let scAddress =  bitcoinjs.crypto.ripemd160(sha256vout);
+
+    return scAddress.toString('hex');
+}
+
+function hasOpCreate(vout){
+    return vout.scriptPubKey.asm.indexOf('OP_CREATE') !== -1;
+}
+
 function number2Buffer(num) {
     var buffer = []
     var neg = (num < 0)
@@ -226,4 +253,5 @@ module.exports = {
     buildPubKeyHashTransaction: buildPubKeyHashTransaction,
     buildCreateContractTransaction: buildCreateContractTransaction,
     buildSendToContractTransaction: buildSendToContractTransaction,
+    getContractAddress: getContractAddress
 }
