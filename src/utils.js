@@ -87,17 +87,17 @@ function buildPubKeyHashTransaction(keyPair, to, amount, fee, utxoList) {
  * @param [transaction] utxoList
  * @returns String the built tx
  */
-function buildCreateContractTransaction(keyPair, code, gasLimit, gasPrice, fee, utxoList) {
-    var from = keyPair.getAddress()
-    var amount = 0
-    fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber()
-    var inputs = selectTxs(utxoList, amount, fee)
-    var tx = new bitcoinjs.TransactionBuilder(keyPair.network)
-    var totalValue = new BigNumber(0)
-    var sendFee = new BigNumber(fee).times(1e8)
+function buildCreateContractTransaction(masterNode, scChangeKeyPair, code, gasLimit, gasPrice, fee, utxoList) {
+    var from = scChangeKeyPair.getAddress();
+    var amount = 0;
+    fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber();
+    var inputs = utxoList;// selectTxs(utxoList, amount, fee);
+    var tx = new bitcoinjs.TransactionBuilder(scChangeKeyPair.network);
+    var totalValue = new BigNumber(0);
+    var sendFee = new BigNumber(fee).times(1e8);
     for (var i = 0; i < inputs.length; i++) {
-        tx.addInput(inputs[i].hash, inputs[i].pos)
-        totalValue = totalValue.plus(inputs[i].value)
+        tx.addInput(inputs[i].txid, inputs[i].txidx);
+        totalValue = totalValue.plus(inputs[i].amount)
     }
     var contract =  bitcoinjs.script.compile([
         OPS.OP_4,
@@ -105,14 +105,33 @@ function buildCreateContractTransaction(keyPair, code, gasLimit, gasPrice, fee, 
         number2Buffer(gasPrice),
         hex2Buffer(code),
         OPS.OP_CREATE
-    ])
-    tx.addOutput(contract, 0)
+    ]);
+    totalValue = totalValue.times(1e8);
+    tx.addOutput(contract, 0);
     if (totalValue.minus(sendFee).toNumber() > 0) {
         tx.addOutput(from, totalValue.minus(sendFee).toNumber())
     }
-    for (var i = 0; i < inputs.length; i++) {
-        tx.sign(i, keyPair)
+
+    let keypair;
+    let utxo;
+    changeNode = masterNode.derivePath('m/44/0\'/0\'/1');
+    receiveNode = masterNode.derivePath('m/44/0\'/0\'/0'); // 0 is for receive address
+
+    for (let k = inputs.length - 1; k >= 0; k--) {
+        utxo = inputs[k];
+
+        if (utxo.type === 'change') {
+            keypair = changeNode.derive(utxo.addressIndex).keyPair;
+        } else if (utxo.type === 'receive') {
+            keypair = receiveNode.derive(utxo.addressIndex).keyPair;
+        }
+
+        tx.sign(k, keypair);
     }
+
+    // for (var i = 0; i < inputs.length; i++) {
+    //     tx.sign(i, keyPair)
+    // }
     return tx.build().toHex()
 }
 
@@ -129,19 +148,19 @@ function buildCreateContractTransaction(keyPair, code, gasLimit, gasPrice, fee, 
  * @param [transaction] utxoList
  * @returns String the built tx
  */
-function buildSendToContractTransaction(keyPair, contractAddress, encodedData, gasLimit, gasPrice, fee, utxoList) {
-    var from = keyPair.getAddress()
+function buildSendToContractTransaction(masterNode, scChangeKeyPair, contractAddress, encodedData, gasLimit, gasPrice, fee, utxoList) {
+    var from = scChangeKeyPair.getAddress()
     var amount = 0
     fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber()
     var inputs = selectTxs(utxoList, amount, fee)
     var tx = new bitcoinjs.TransactionBuilder(keyPair.network)
     var totalValue = new BigNumber(0)
-    var sendFee = new BigNumber(fee).times(1e8)
+    var sendFee = new BigNumber(fee).times(1e8);
     for (var i = 0; i < inputs.length; i++) {
-        tx.addInput(inputs[i].hash, inputs[i].pos)
-        totalValue = totalValue.plus(inputs[i].value)
+        tx.addInput(inputs[i].txid, inputs[i].txidx);
+        totalValue = totalValue.plus(inputs[i].amount)
     }
-    var contract =  bitcoinjs.script.compile([
+    var contract = bitcoinjs.script.compile([
         OPS.OP_4,
         number2Buffer(gasLimit),
         number2Buffer(gasPrice),
@@ -149,13 +168,29 @@ function buildSendToContractTransaction(keyPair, contractAddress, encodedData, g
         hex2Buffer(contractAddress),
         OPS.OP_CALL
     ])
+    totalValue = totalValue.times(1e8);
     tx.addOutput(contract, 0)
     if (totalValue.minus(sendFee).toNumber() > 0) {
         tx.addOutput(from, totalValue.minus(sendFee).toNumber())
     }
-    for (var i = 0; i < inputs.length; i++) {
-        tx.sign(i, keyPair)
+
+    let keypair;
+    let utxo;
+    changeNode = masterNode.derivePath('m/44/0\'/0\'/1');
+    receiveNode = masterNode.derivePath('m/44/0\'/0\'/0'); // 0 is for receive address
+
+    for (let k = inputs.length - 1; k >= 0; k--) {
+        utxo = inputs[k];
+
+        if (utxo.type === 'change') {
+            keypair = changeNode.derive(utxo.addressIndex).keyPair;
+        } else if (utxo.type === 'receive') {
+            keypair = receiveNode.derive(utxo.addressIndex).keyPair;
+        }
+
+        tx.sign(k, keypair);
     }
+
     return tx.build().toHex()
 }
 
