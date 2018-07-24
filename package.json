@@ -1,11 +1,11 @@
 {
-  "name": "qtumjs-lib",
+  "name": "fabcoinjs-lib",
   "version": "0.0.7",
   "description": "An extend lib for bitcoinjs-lib, it supports two new network of qtum and qtum-testnet, and it can generate contract creating and sending transactions",
   "main": "src/index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/qtumproject/qtumjs-lib.git"
+    "url": "git+https://github.com/4d11/fabcoinjs-lib.git"
   },
   "keywords": [
     "qtum",
@@ -13,17 +13,17 @@
     "smart contract",
     "bitcoin"
   ],
-  "author": "Qtum Weiyu",
+  "author": "Adil Asim",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/qtumproject/qtumjs-lib/issues"
+    "url": "https://github.com/4d11/fabcoinjs-lib.git"
   },
-  "homepage": "https://github.com/qtumproject/qtumjs-lib#readme",
+  "homepage": "https://github.com/4d11/fabcoinjs-lib.git",
   "devDependencies": {},
   "dependencies": {
     "bignumber.js": "^4.1.0",
     "bitcoinjs-lib": "^3.3.2",
     "qtum-opcodes": "^1.0.0",
-    "safe-buffer": "^5.1.1"
+    "safe-buffer": "^5.1.2"
   }
 }
