@@ -88,12 +88,12 @@ function buildPubKeyHashTransaction(keyPair, to, amount, fee, utxoList) {
  * @param [transaction] utxoList
  * @returns String the built tx
  */
-function buildCreateContractTransaction(masterNode, scChangeKeyPair, code, gasLimit, gasPrice, fee, utxoList) {
-    var from = scChangeKeyPair.getAddress();
+function buildCreateContractTransaction(masterNode, changeKeyPair, code, gasLimit, gasPrice, fee, utxoList) {
+    var from = changeKeyPair.getAddress(); // scChangeKeyPair.getAddress();
     var amount = 0;
     fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber();
     var inputs = utxoList;// selectTxs(utxoList, amount, fee);
-    var tx = new bitcoinjs.TransactionBuilder(scChangeKeyPair.network);
+    var tx = new bitcoinjs.TransactionBuilder(changeKeyPair.network);
     var totalValue = new BigNumber(0);
     var sendFee = new BigNumber(fee).times(1e8);
     for (var i = 0; i < inputs.length; i++) {
@@ -149,12 +149,12 @@ function buildCreateContractTransaction(masterNode, scChangeKeyPair, code, gasLi
  * @param [transaction] utxoList
  * @returns String the built tx
  */
-function buildSendToContractTransaction(masterNode, scChangeKeyPair, contractAddress, encodedData, gasLimit, gasPrice, fee, utxoList) {
-    var from = scChangeKeyPair.getAddress()
+function buildSendToContractTransaction(masterNode, changeKeyPair, contractAddress, encodedData, gasLimit, gasPrice, fee, utxoList) {
+    var from = changeKeyPair.getAddress();
     var amount = 0
     fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber()
-    var inputs = selectTxs(utxoList, amount, fee)
-    var tx = new bitcoinjs.TransactionBuilder(keyPair.network)
+    var inputs = utxoList; // selectTxs(utxoList, amount, fee)
+    var tx = new bitcoinjs.TransactionBuilder(changeKeyPair.network); // todo fix
     var totalValue = new BigNumber(0)
     var sendFee = new BigNumber(fee).times(1e8);
     for (var i = 0; i < inputs.length; i++) {
