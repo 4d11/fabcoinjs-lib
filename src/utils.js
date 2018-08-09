@@ -144,15 +144,16 @@ function buildCreateContractTransaction(masterNode, changeKeyPair, code, gasLimi
  * @param String contractAddress The contract address
  * @param String encodedData The encoded abi data
  * @param Number gasLimit
- * @param Number gasPrice(unit: 1e-8 QTUM/gas)
- * @param Number fee(unit: QTUM)
+ * @param Number gasPrice(unit: 1e-8 FAB/gas or Lius/gas)
+ * @param Number fee(unit: FAB)
  * @param [transaction] utxoList
+ * @param amount The amount in Fabcoins to send
  * @returns String the built tx
  */
 function buildSendToContractTransaction(masterNode, changeKeyPair, contractAddress, encodedData, gasLimit, gasPrice,
                                         fee, utxoList, amount) {
     var from = changeKeyPair.getAddress();
-    // var amount = 0
+    amount =  BigNumber(amount).times(1e8);
     fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber()
     var inputs = utxoList; // selectTxs(utxoList, amount, fee)
     var tx = new bitcoinjs.TransactionBuilder(changeKeyPair.network); // todo fix
