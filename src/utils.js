@@ -153,8 +153,8 @@ function buildCreateContractTransaction(masterNode, changeKeyPair, code, gasLimi
 function buildSendToContractTransaction(masterNode, changeKeyPair, contractAddress, encodedData, gasLimit, gasPrice,
                                         fee, utxoList, amount) {
     var from = changeKeyPair.getAddress();
-    amount =  new BigNumber(amount).times(1e8).toNumber();
-    fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber()
+    amount =  new BigNumber(amount).times(1e8);
+    fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber();
     var inputs = utxoList; // selectTxs(utxoList, amount, fee)
     var tx = new bitcoinjs.TransactionBuilder(changeKeyPair.network); // todo fix
     var totalValue = new BigNumber(0)
@@ -172,9 +172,11 @@ function buildSendToContractTransaction(masterNode, changeKeyPair, contractAddre
         OPS.OP_CALL
     ])
     totalValue = totalValue.times(1e8);
-    tx.addOutput(contract, amount);
-    if (totalValue.minus(sendFee).toNumber() > 0) {
-        tx.addOutput(from, totalValue.minus(sendFee).toNumber())
+    tx.addOutput(contract, amount.toNumber());
+
+    const change = totalValue.minus(amount).minus(sendFee).toNumber();
+    if (change > 0) {
+        tx.addOutput(from, change)
     }
 
     let keypair;
